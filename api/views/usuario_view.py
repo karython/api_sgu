@@ -1,4 +1,5 @@
 from flask_restful import Resource
+from marshmallow import ValidationError
 from api.schemas import usuario_schema
 from flask import request, jsonify, make_response
 from api.entities import usuario
@@ -8,26 +9,43 @@ from api import api
 class UsuarioList(Resource):
     def get(self):
         
-        result = usuario_service.listar_usuario()
-        if not result:
+        # NOTE: esse ponto foi atualizado para o uso do schema
+        usuarios = usuario_service.listar_usuario()
+        if not usuarios:
             return make_response(jsonify({"message": "Não existe usuarios"}), 404)
-        return make_response(jsonify(result), 200)
+        
+        schema = usuario_schema.UsuarioSchema(many=True)
+        return make_response(jsonify(schema.dump(usuarios)), 200)
 
     def post(self):
+        # NOTE validação da serialização, alteração de if else para try e except, 
+        # verifica se o usuario ja existe
+
+        schema = usuario_schema.UsuarioSchema()
+
+        try:
+            dados = schema.load(request.json)
+        except ValidationError as err:
+            return make_response(jsonify(err.messages), 400)
         
-        us = usuario_schema.UsuarioSchema()
-        validate = us.validate(request.json)
-        if validate:
-            return make_response(jsonify(validate), 400)
-        else:
-            nome = request.json['nome']
-            email = request.json['emailResource']
-            senha = request.json['senha']
+        if usuario_service.listar_usuario_email(dados['email']):
+            return make_response(jsonify({"message": "Email já cadastrado"}), 400)
+        
+        
+        try:
+            # como estamos validando os dados, vamos buscar os dados da variavel 'dados' depois da serialização
+            novo_usuario = usuario.Usuario(
+            nome = dados['nome'],
+            email = dados['email'],
+            senha = dados['senha'])
 
-            usuario_novo = usuario.Usuario(nome, email, senha)
-            result = usuario_service.cadastrar_usuario(usuario_novo)
-    
-            return make_response(jsonify(result), 201)
+            resultado = usuario_service.cadastrar_usuario(novo_usuario)
+            return make_response(jsonify(schema.dump(resultado)), 201)
 
 
-api.add_resource(UsuarioList, '/usuario')
+        except Exception as e:
+            return make_response(jsonify({"message": str(e)}), 400)
+
+
+
+api.add_resource(UsuarioList, '/usuario', '/usuario/<int:id_usuario>') # /usuario/1
