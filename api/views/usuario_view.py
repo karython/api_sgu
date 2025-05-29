@@ -9,17 +9,25 @@ from api import api
 class UsuarioList(Resource):
     def get(self):
         
-        # NOTE: esse ponto foi atualizado para o uso do schema
+        
         usuarios = usuario_service.listar_usuario()
         if not usuarios:
             return make_response(jsonify({"message": "Não existe usuarios"}), 404)
         
         schema = usuario_schema.UsuarioSchema(many=True)
+     
         return make_response(jsonify(schema.dump(usuarios)), 200)
-
+    #TODO: implementar a busca por ID
+    '''
+    def get(self, id_usuario):
+        usuarios = usuario_service.listar_usuario_id(id_usuario)
+        if not usuarios:
+            return make_response(jsonify({"message": "Não existe usuarios"}), 404)
+        
+        schema = usuario_schema.UsuarioSchema()
+        return make_response(jsonify(schema.dump(usuarios)), 200)
+    '''
     def post(self):
-        # NOTE validação da serialização, alteração de if else para try e except, 
-        # verifica se o usuario ja existe
 
         schema = usuario_schema.UsuarioSchema()
 
@@ -45,7 +53,47 @@ class UsuarioList(Resource):
 
         except Exception as e:
             return make_response(jsonify({"message": str(e)}), 400)
+        
+api.add_resource(UsuarioList, '/usuario', '/usuario/<int:id_usuario>')
 
 
+class UsuarioResource(Resource):
+    def put(self, id_usuario):
+        usuario_encontrado = usuario_service.listar_usuario_id(id_usuario)
+        if not usuario_encontrado:
+            return make_response(jsonify({"message": "Usuário não encontrado"}), 404)
+        
+        schema = usuario_schema.UsuarioSchema()
 
-api.add_resource(UsuarioList, '/usuario', '/usuario/<int:id_usuario>') # /usuario/1
+        try:
+            dados = schema.load(request.json)
+        except ValidationError as err:
+            return make_response(jsonify(err.messages), 400)
+        
+        # atualiza os dados do usuário
+        try:
+            usuario_encontrado.nome = dados['nome']
+            usuario_encontrado.email = dados['email']
+            
+            # faz a criptografia da senha antes de salvar no banco de dados
+            if dados.get('senha'):
+                usuario_encontrado.gen_senha(dados['senha'])
+
+            usuario_service.editar_usuario(id_usuario, usuario_encontrado)
+            return make_response(jsonify(schema.dump(usuario_encontrado)), 200)
+
+        except ValidationError as err:
+            return make_response(jsonify(err.messages), 400)
+
+    def delete(self, id_usuario):
+        usuario_encontrado = usuario_service.listar_usuario_id(id_usuario)
+        if not usuario_encontrado:
+            return make_response(jsonify({"message": "Usuário não encontrado"}), 404)
+        try:
+            usuario_service.excluir_usuario(id_usuario)
+            return make_response(jsonify({"message": "Usuário excluído com sucesso"}), 200)
+        except Exception as e:
+            return make_response(jsonify({"message": str(e)}), 400)
+        
+
+api.add_resource(UsuarioResource, '/usuario/<int:id_usuario>')  # /usuario/1

@@ -36,4 +36,13 @@ def editar_usuario(id, novo_usuario):
         db.session.commit()
         return usuario
     return None
-    ...
+    
+# NOTE: função adicionada para listar usuario por ID
+def listar_usuario_id(id):
+    try:
+        # busca o usuario pelo ID no banco de dados
+        usuario_encontrado = usuario_model.Usuario.query.get(id)
+        return usuario_encontrado
+    except Exception as e:
+        print(f"Erro ao listar usuario por ID: {e}")
+        return None

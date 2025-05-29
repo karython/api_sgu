@@ -2,8 +2,10 @@ from dotenv import load_dotenv
 import os
 
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import declarative_base
 
 load_dotenv()
+
 
 HOST = os.getenv('HOST')
 
@@ -11,8 +13,7 @@ USER= os.getenv('USER')
 PASSWORD = os.getenv('PASSWORD')
 PORT = os.getenv('PORT')
 DB = os.getenv('DB')
-print(HOST)
-print(PASSWORD)
+
 
 SECRET_KEY = os.getenv('SECRET_KEY')    
 
