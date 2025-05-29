@@ -56,7 +56,7 @@ class UsuarioList(Resource):
         
 api.add_resource(UsuarioList, '/usuario', '/usuario/<int:id_usuario>')
 
-
+# class UsuarioList(Resource): para editar e excluir usuários
 class UsuarioResource(Resource):
     def put(self, id_usuario):
         usuario_encontrado = usuario_service.listar_usuario_id(id_usuario)
