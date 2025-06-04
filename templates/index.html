@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cadastro e Lista de Usuários</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body>
+<div class="container py-4">
+    <h1 class="mb-4">Usuários</h1>
+
+    <div id="alert-container"></div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <strong>Adicionar Novo Usuário</strong>
+        </div>
+        <div class="card-body">
+            <form id="formUsuario">
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome</label>
+                    <input type="text" class="form-control" id="nome" required />
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" required />
+                </div>
+                <div class="mb-3">
+                    <label for="senha" class="form-label">Senha</label>
+                    <input type="password" class="form-control" id="senha" required />
+                </div>
+                <button type="submit" class="btn btn-primary">Cadastrar</button>
+            </form>
+        </div>
+    </div>
+
+    <h2>Lista de Usuários</h2>
+    <table class="table table-striped" id="tabelaUsuarios">
+        <thead>
+            <tr>
+                
+                <th>Nome</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Usuários serão inseridos aqui -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:5000/usuario';  // Ajuste a porta se necessário
+
+    function mostrarAlerta(mensagem, tipo = 'success') {
+        const alertContainer = document.getElementById('alert-container');
+        alertContainer.innerHTML = `
+            <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                ${mensagem}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+            </div>
+        `;
+    }
+
+    async function carregarUsuarios() {
+        try {
+            const resposta = await fetch(API_URL);
+            if (!resposta.ok) {
+                mostrarAlerta('Não foi possível carregar os usuários.', 'danger');
+                return;
+            }
+            const usuarios = await resposta.json();
+            const tbody = document.querySelector('#tabelaUsuarios tbody');
+            tbody.innerHTML = '';
+            usuarios.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    
+                    <td>${u.nome}</td>
+                    <td>${u.email}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (error) {
+            mostrarAlerta('Erro ao conectar com a API.', 'danger');
+            console.error(error);
+        }
+    }
+
+    async function cadastrarUsuario(event) {
+        event.preventDefault();
+        const nome = document.getElementById('nome').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const senha = document.getElementById('senha').value;
+
+        if (!nome || !email || !senha) {
+            mostrarAlerta('Preencha todos os campos.', 'warning');
+            return;
+        }
+
+        try {
+            const resposta = await fetch(API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({nome, email, senha})
+            });
+
+            const dados = await resposta.json();
+
+            if (resposta.ok) {
+                mostrarAlerta('Usuário cadastrado com sucesso!');
+                document.getElementById('formUsuario').reset();
+                carregarUsuarios();
+            } else {
+                // Se a API retornar erros de validação ou mensagem
+                const mensagens = typeof dados === 'object' ? Object.values(dados).flat().join('<br>') : dados.message || 'Erro ao cadastrar.';
+                mostrarAlerta(mensagens, 'danger');
+            }
+        } catch (error) {
+            mostrarAlerta('Erro ao conectar com a API.', 'danger');
+            console.error(error);
+        }
+    }
+
+    document.getElementById('formUsuario').addEventListener('submit', cadastrarUsuario);
+
+    // Carregar usuários ao abrir a página
+    carregarUsuarios();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
