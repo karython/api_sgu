@@ -6,9 +6,10 @@ from api.entities import usuario
 from api.services import usuario_service
 from api import api
 
+# para trabalhar com todos os usuários
+
 class UsuarioList(Resource):
     def get(self):
-        
         
         usuarios = usuario_service.listar_usuario()
         if not usuarios:
@@ -18,15 +19,7 @@ class UsuarioList(Resource):
      
         return make_response(jsonify(schema.dump(usuarios)), 200)
     #TODO: implementar a busca por ID
-    '''
-    def get(self, id_usuario):
-        usuarios = usuario_service.listar_usuario_id(id_usuario)
-        if not usuarios:
-            return make_response(jsonify({"message": "Não existe usuarios"}), 404)
-        
-        schema = usuario_schema.UsuarioSchema()
-        return make_response(jsonify(schema.dump(usuarios)), 200)
-    '''
+
     def post(self):
 
         schema = usuario_schema.UsuarioSchema()
@@ -54,10 +47,23 @@ class UsuarioList(Resource):
         except Exception as e:
             return make_response(jsonify({"message": str(e)}), 400)
         
-api.add_resource(UsuarioList, '/usuario', '/usuario/<int:id_usuario>')
+
+
+api.add_resource(UsuarioList, '/usuario')
+
 
 # class UsuarioList(Resource): para editar e excluir usuários
 class UsuarioResource(Resource):
+    # função para buscar um usuário por ID
+    def get(self, id_usuario):
+        usuario_encontrado = usuario_service.listar_usuario_id(id_usuario)
+        if not usuario_encontrado:
+            return make_response(jsonify({"message": "Usuário não encontrado"}), 404)
+        
+        schema = usuario_schema.UsuarioSchema()
+        return make_response(jsonify(schema.dump(usuario_encontrado)), 200)
+    
+    
     def put(self, id_usuario):
         usuario_encontrado = usuario_service.listar_usuario_id(id_usuario)
         if not usuario_encontrado:
