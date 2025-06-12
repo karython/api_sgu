@@ -6,21 +6,97 @@ from api.entities import usuario
 from api.services import usuario_service
 from api import api
 
-# para trabalhar com todos os usuários
 
+
+# para trabalhar com todos os usuários
 class UsuarioList(Resource):
     def get(self):
-        
+        """Rota responsavel por listar todos os usuários
+        ---
+        responses:
+            200:
+              description: Lista de usuários encontrados
+              schema:
+                  id: Usuario
+                  properties:
+                    nome:
+                      type: string
+                    email:
+                      type: string
+                    senha:
+                      type: string
+            404: 
+              description: Usuário não encontrado
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Não existe usuarios
+            
+        """
         usuarios = usuario_service.listar_usuario()
         if not usuarios:
             return make_response(jsonify({"message": "Não existe usuarios"}), 404)
         
         schema = usuario_schema.UsuarioSchema(many=True)
      
-        return make_response(jsonify(schema.dump(usuarios)), 200)
-    #TODO: implementar a busca por ID
+        return make_response(jsonify(schema.dump(usuarios)), 200)  
+
+
+
+
+
+
 
     def post(self):
+        """
+        Esta rota é responsavel por cadastrar um novo usuário
+        ---
+        parameters:
+          - in: body
+            name: Usuario
+            description: Cadastrar novo usuário
+            schema:
+              type: object
+              required:
+                - nome
+                - email
+                - senha
+              properties:
+                nome:
+                  type: string
+                email:
+                  type: string
+                senha:
+                  type: string
+
+        responses:
+            201: 
+              description: Usuário cadastrado com sucesso
+              schema:
+                id: Usuario
+                properties:
+                  nome:
+                    type: string
+                  email:
+                    type: string
+                  senha:
+                    type: string
+
+            400: 
+              description: Erro na requisição
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Erro na requisição. Verifique os dados enviados                
+            
+
+
+        """
+
 
         schema = usuario_schema.UsuarioSchema()
 
