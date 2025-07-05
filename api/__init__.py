@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_marshmallow import Marshmallow
@@ -14,9 +14,12 @@ migrate = Migrate(app, db)
 api = Api(app)
 CORS(app)
 
+# Inicializar o banco de dados
+@app.before_request
+def create_tables():
+    if request.endpoint == 'index':  # Executar apenas na primeira requisição
+        db.create_all()
 
-
-# IMPORTA as models e views para o migrate ver
-from api.model import usuario_model
-
-from api.views import usuario_view
+# IMPORTA as views para o migrate ver
+from .views import usuario_view
+from .model import usuario_model
